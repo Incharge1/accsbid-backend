@@ -1,41 +1,42 @@
-const express = require("express");
-const mongoose = require("mongoose");
-const cors = require("cors");
+import express from "express";
+import mongoose from "mongoose";
+import cors from "cors";
+import dotenv from "dotenv";
+
+dotenv.config();
 
 const app = express();
-app.use(express.json());
 app.use(cors());
+app.use(express.json());
 
-// ---------------------
-//  MongoDB Connection
-// ---------------------
-const MONGO_URI = "mongodb+srv://Incharge1:Efootball@cluster0.ai7ck5p.mongodb.net/?retryWrites=true&w=majority";
+// ====== MONGODB CONNECTION ======
+const mongoURI = process.env.MONGO_URI;
 
 mongoose
-  .connect(MONGO_URI)
+  .connect(mongoURI, {
+    useNewUrlParser: true,
+    useUnifiedTopology: true,
+  })
   .then(() => console.log("MongoDB Connected"))
-  .catch((err) => console.error("MongoDB Error:", err));
+  .catch((err) => console.log("MongoDB Connection Error:", err));
 
-// ---------------------
-//  Test Route
-// ---------------------
-app.get("/test-db", (req, res) => {
-  if (mongoose.connection.readyState === 1) {
-    res.send("MongoDB connection successful");
-  } else {
-    res.send("MongoDB NOT connected");
-  }
-});
-
-// ---------------------
-//  Root Route
-// ---------------------
+// ====== ROOT ROUTE ======
 app.get("/", (req, res) => {
   res.send("Server is running!");
 });
 
-// ---------------------
-//  Start Server
-// ---------------------
+// ====== TEST DB ROUTE ======
+app.get("/test-db", async (req, res) => {
+  try {
+    await mongoose.connection.db.admin().ping();
+    res.send("MongoDB connection successful");
+  } catch (error) {
+    res.status(500).send("Database connection failed");
+  }
+});
+
+// ====== START SERVER ======
 const PORT = process.env.PORT || 10000;
-app.listen(PORT, () => console.log(`Server running on port ${PORT}`));
+app.listen(PORT, () => {
+  console.log(`Server running on port ${PORT}`);
+});
