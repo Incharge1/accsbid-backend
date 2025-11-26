@@ -1,42 +1,45 @@
-import express from "express";
-import mongoose from "mongoose";
-import cors from "cors";
-import dotenv from "dotenv";
+// server.js
+
+const express = require('express');
+const mongoose = require('mongoose');
+const dotenv = require('dotenv');
+const cors = require('cors');
 
 dotenv.config();
 
 const app = express();
-app.use(cors());
-app.use(express.json());
+const PORT = process.env.PORT || 10000;
 
-// ====== MONGODB CONNECTION ======
+// Middleware
+app.use(express.json());
+app.use(cors());
+
+// MongoDB Connection
 const mongoURI = process.env.MONGO_URI;
 
-mongoose
-  .connect(mongoURI, {
-    useNewUrlParser: true,
-    useUnifiedTopology: true,
-  })
-  .then(() => console.log("MongoDB Connected"))
-  .catch((err) => console.log("MongoDB Connection Error:", err));
+mongoose.connect(mongoURI)
+  .then(() => console.log('MongoDB Connected ✅'))
+  .catch(err => {
+    console.error('MongoDB connection error ❌', err);
+    process.exit(1); // Stop server if DB connection fails
+  });
 
-// ====== ROOT ROUTE ======
-app.get("/", (req, res) => {
-  res.send("Server is running!");
-});
-
-// ====== TEST DB ROUTE ======
-app.get("/test-db", async (req, res) => {
+// Test route
+app.get('/test-db', async (req, res) => {
   try {
-    await mongoose.connection.db.admin().ping();
-    res.send("MongoDB connection successful");
-  } catch (error) {
-    res.status(500).send("Database connection failed");
+    const collections = await mongoose.connection.db.listCollections().toArray();
+    res.json({ status: 'success', collections });
+  } catch (err) {
+    res.status(500).json({ status: 'error', message: err.message });
   }
 });
 
-// ====== START SERVER ======
-const PORT = process.env.PORT || 10000;
+// Example route for login/signup placeholder
+app.get('/', (req, res) => {
+  res.send('Backend is running 🚀');
+});
+
+// Start server
 app.listen(PORT, () => {
   console.log(`Server running on port ${PORT}`);
 });
